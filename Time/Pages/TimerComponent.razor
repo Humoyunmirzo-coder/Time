@@ -1,0 +1,91 @@
+﻿@page "/timer"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components
+
+<h3>Unique Timer</h3>
+
+<input type="number" @bind="duration" placeholder="Duration in seconds" />
+<button @onclick="StartTimer">Start</button>
+<button @onclick="PauseTimer">Pause</button>
+<button @onclick="ResumeTimer">Resume</button>
+
+<p>Start Time: @startTime</p>
+<p>End Time: @endTime</p>
+<p>Remaining Time: @remainingTime</p>
+<p>Elapsed Time: @elapsedTime</p>
+
+<div class="progress">
+    <div class="progress-bar" role="progressbar" style="width: @progress%" aria-valuenow="@progress" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+
+@code {
+    private int duration;
+    private TimeSpan remainingTime;
+    private TimeSpan elapsedTime;
+    private double progress;
+    private DateTime startTime;
+    private DateTime endTime;
+
+    [Inject] private TimerService TimerService { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
+
+    private HubConnection hubConnection;
+
+    protected override async Task OnInitializedAsync()
+    {
+        TimerService.OnTick += async () => await InvokeAsync(UpdateTimer);
+        TimerService.OnCompleted += async () => await InvokeAsync(OnTimerCompleted);
+
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(NavigationManager.ToAbsoluteUri("/timerHub"))
+            .Build();
+
+        hubConnection.On<DateTime, DateTime>("ReceiveTimerData", async (start, end) =>
+        {
+            startTime = start;
+            endTime = end;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+    }
+
+    private void StartTimer()
+    {
+        TimerService.Start(TimeSpan.FromSeconds(duration));
+        startTime = TimerService.GetStartTime();
+        endTime = TimerService.GetEndTime();
+        hubConnection.SendAsync("SendTimerData", startTime, endTime);
+    }
+
+    private void PauseTimer()
+    {
+        TimerService.Pause();
+    }
+
+    private void ResumeTimer()
+    {
+        TimerService.Resume();
+    }
+
+    private async Task OnTimerCompleted()
+    {
+        // Optionally handle timer completion
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void UpdateTimer()
+    {
+        remainingTime = TimerService.GetRemainingTime();
+        elapsedTime = TimerService.GetElapsedTime();
+        progress = (elapsedTime.TotalSeconds / (elapsedTime.TotalSeconds + remainingTime.TotalSeconds)) * 100;
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            UpdateTimer();
+        }
+    }
+}
