@@ -39,7 +39,7 @@ internal class Program
         builder.Services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.1));
         builder.Services.AddSignalR();
 
-        builder.Services.AddSyncfusionBlazor();
+       // builder.Services.AddSyncfusionBlazor();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
