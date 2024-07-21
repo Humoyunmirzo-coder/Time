@@ -6,9 +6,9 @@
 @using Time.Repository
 @using Time.Service
 @using Timer = Time.Data.Timer
-@using static Time.Service.TimerServices
-@inject TimerService timerService
+@using static Time.Service.TimerService
 @inherits ComputedStateComponent<(int, int, int)>
+@inject TimerService timerService
 @inject IFusionTime Time
 @inject NavigationManager Nav
 @inject ICommander Commander
@@ -18,11 +18,11 @@
     var state = State.ValueOrDefault;
     var error = State.Error;
     var _elapsedTime = state.Item1;
-    var _reminingTime = state.Item2;
+    var _remainingTime = state.Item2;
     var _elapsedPercentage = state.Item3;
 }
 
-<h1>Timer app</h1>
+<h1>Timer</h1>
 <div class="alert alert-primary">
     Open this page in <a href="@Nav.Uri" target="_blank">another window</a> to see it updates in sync.
 </div>
@@ -38,16 +38,19 @@
 </div>
 
 <div>
-    <p>Qolgan vaqt:  @_reminingTime</p>
+    <p>Qolgan vaqt:  @_elapsedTime</p>
     <p>Boshlash vaqt: @startTime</p>
     <p>Tugash vaqt: @endTime</p>
 </div>
 <div>
-    <p>O'tgan vaqt: @_elapsedTime</p>
+    <p>O'tgan vaqt: @_remainingTime </p>
+
 </div>
 
-<div style="position: relative; width: 100%; height: 20px; background: lightgray;">
-    <div style="position: absolute; width: @_elapsedPercentage%; height: 100%; background: green;"></div>
+<!-- Aylana shaklidagi progress bar -->
+<div class="progress-container">
+    <div class="progress-circle" style="--percentage: @_elapsedPercentage;"></div>
+    <div class="progress-text">@_elapsedPercentage% Complete</div>
 </div>
 
 @if (timerData == null)
@@ -94,7 +97,7 @@ else
     private async Task StartTimer()
     {
         if (IsRunning || !isPause) return;
-        await Commander.Call(new TimerService.TimerDurationCons(TimerDuration));
+        await Commander.Call(new TimerDurationCons(TimerDuration));
     }
 
     public ICollection<Time.Data.Timer> timerData = new List<Time.Data.Timer>();
@@ -121,3 +124,35 @@ else
             isPause = false;
     }
 }
+
+<style>
+    .progress-container {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: auto;
+    }
+
+    .progress-circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(green var(--percentage), lightgray 0);
+        border: 10px solid lightgray;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.2em;
+        color: black;
+        text-align: center;
+    }
+</style>

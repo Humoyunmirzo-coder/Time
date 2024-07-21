@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.EntityFrameworkCore;
 using Stl.CommandR;
 using Stl.Fusion;
 using Stl.Fusion.Extensions;
-using Time.Data;
 using Time.Repository;
 using Time.Service;
 using Time.TimeDbcontext;
+using Stl.Fusion.UI;
+using Syncfusion.Blazor;
+
 
 internal class Program
 {
@@ -25,17 +25,21 @@ internal class Program
                    options.UseNpgsql("Server=localhost;Database=TimeDB;Username=postgres;Password=2244;"));
 
         builder.Services.AddScoped<TimerRepository>();
+        builder.Services.AddScoped<TimerService>();
 
         var fusion = builder.Services.AddFusion();
         fusion.AddFusionTime();
-        fusion.AddService<TimerServices>();
+        fusion.AddService<TimerService>();
+        fusion = builder.Services.AddFusion();
 
         builder.Services.AddCommander();
 
-        builder.Services.AddScoped<TimerServices>();
+      //  builder.Services.AddHostedService(c => c.GetRequiredService<TimerService>());
 
+        builder.Services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.1));
         builder.Services.AddSignalR();
 
+        builder.Services.AddSyncfusionBlazor();
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.

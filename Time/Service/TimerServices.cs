@@ -2,11 +2,11 @@
 using Stl.CommandR;
 using Stl.Fusion;
 using System.Reactive;
+using Stl.CommandR.Internal;
 
 namespace Time.Service
 {
-    public class TimerServices
-    {
+
         public record TimerDurationCons(int timer) : ICommand<Unit>;
 
         public class TimerService : IComputeService, IHostedService
@@ -14,7 +14,9 @@ namespace Time.Service
             public int TimerDuration;
             ICollection<Data.Timer> timerData = new List<Data.Timer>();
 
-            private int remainingTime;
+        private static int _nextId = 1;
+
+        private int remainingTime;
             private int elapsedTime;
             private DateTime startTime;
             private DateTime endTime;
@@ -93,13 +95,17 @@ namespace Time.Service
                 }
             }
 
+
+        
+
+
             public Task SaveData(DateTime st, DateTime end)
             {
                 lock (_lock)
                 {
                     Data.Timer timerr = new Data.Timer()
                     {
-                        Id = Guid.NewGuid(),
+                        Id = _nextId++,
                         StartTime = st,
                         EndTime = end,
                     };
@@ -143,4 +149,4 @@ namespace Time.Service
             public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
         }
     }
-}
+
