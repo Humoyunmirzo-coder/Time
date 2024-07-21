@@ -8,15 +8,26 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="7.0.3" />
-    <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="1.26.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client.Core" Version="7.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.17" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.17">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="7.0.1" />
+    <PackageReference Include="Stl.CommandR" Version="6.8.11" />
+    <PackageReference Include="Stl.Fusion" Version="6.8.11" />
+    <PackageReference Include="Stl.Fusion.Blazor" Version="6.8.11" />
+    <PackageReference Include="Stl.Fusion.Server" Version="6.8.11" />
+    <PackageReference Include="Stl.Generators" Version="6.8.11" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ConfigureService\" />
   </ItemGroup>
 
 </Project>

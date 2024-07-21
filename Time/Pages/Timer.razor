@@ -1,87 +1,123 @@
-﻿@page "/uniqueTimer"
-@using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.AspNetCore.Components
+﻿@page "/timer"
+@using Stl.CommandR
+@using Stl.Fusion.Blazor
+@using System.Threading
+@using Stl.Fusion.Extensions
+@using Time.Repository
+@using Time.Service
+@using Timer = Time.Data.Timer
+@using static Time.Service.TimerServices
+@inject TimerService timerService
+@inherits ComputedStateComponent<(int, int, int)>
+@inject IFusionTime Time
+@inject NavigationManager Nav
+@inject ICommander Commander
+@inject TimerRepository timerRepo
 
-<h3>Unique Timer</h3>
+@{
+    var state = State.ValueOrDefault;
+    var error = State.Error;
+    var _elapsedTime = state.Item1;
+    var _reminingTime = state.Item2;
+    var _elapsedPercentage = state.Item3;
+}
 
-<input type="number" @bind="duration" />
-<button @onclick="StartTimer">Start</button>
-<button @onclick="PauseTimer">Pause</button>
-<button @onclick="ResumeTimer">Resume</button>
-
-<p>Start Time: @startTime</p>
-<p>End Time: @endTime</p>
-<p>Remaining Time: @remainingTime</p>
-<p>Elapsed Time: @elapsedTime</p>
-
-<div class="progress">
-    <div class="progress-bar" role="progressbar" style="width: @progress%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+<h1>Timer app</h1>
+<div class="alert alert-primary">
+    Open this page in <a href="@Nav.Uri" target="_blank">another window</a> to see it updates in sync.
+</div>
+@if (error != null)
+{
+    <div class="alert alert-warning" role="alert">Update error: @error.Message</div>
+}
+<div>
+    <input type="number" @bind="TimerDuration" @oninput="Input" readonly="@IsRunning" placeholder="Taymer vaqti (soniya)" />
+    <button @onclick="StartTimer">Start</button>
+    <button @onclick="Pause">Pause</button>
+    <p hidden="@isPause">Stopping...</p>
 </div>
 
+<div>
+    <p>Qolgan vaqt:  @_reminingTime</p>
+    <p>Boshlash vaqt: @startTime</p>
+    <p>Tugash vaqt: @endTime</p>
+</div>
+<div>
+    <p>O'tgan vaqt: @_elapsedTime</p>
+</div>
+
+<div style="position: relative; width: 100%; height: 20px; background: lightgray;">
+    <div style="position: absolute; width: @_elapsedPercentage%; height: 100%; background: green;"></div>
+</div>
+
+@if (timerData == null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var timer in timerData)
+            {
+                <tr>
+                    <td>@timer.Id</td>
+                    <td>@timer.StartTime</td>
+                    <td>@timer.EndTime</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
 @code {
-    private int duration;
-    private TimeSpan remainingTime;
-    private TimeSpan elapsedTime;
-    private double progress;
+    protected override async Task<(int, int, int)> ComputeState(CancellationToken cancellationToken)
+    {
+        var result = await timerService.Get();
+        startTime = result.Item2;
+        endTime = result.Item3;
+        TimerDuration = result.Item1;
+        timerData = await timerService.GetData();
+        var (isRunning, remainingTime, elapsedTime, elapsedPercentage, pause) = await timerService.Update();
+        IsRunning = isRunning;
+        isPause = !pause;
+        return (remainingTime, elapsedTime, elapsedPercentage);
+    }
+
+    private async Task StartTimer()
+    {
+        if (IsRunning || !isPause) return;
+        await Commander.Call(new TimerService.TimerDurationCons(TimerDuration));
+    }
+
+    public ICollection<Time.Data.Timer> timerData = new List<Time.Data.Timer>();
+    public bool IsRunning = false;
+    public bool isPause = true;
+    public int TimerDuration;
     private DateTime startTime;
     private DateTime endTime;
 
-    [Inject] private TimerService TimerService { get; set; }
-    [Inject] private NavigationManager NavigationManager { get; set; }
-
-    private HubConnection hubConnection;
-
-    protected override async Task OnInitializedAsync()
+    protected override async void OnInitialized()
     {
-        TimerService.OnTick += async () => await InvokeAsync(StateHasChanged);
-        TimerService.OnCompleted += async () => await InvokeAsync(OnTimerCompleted);
-
-        hubConnection = new HubConnectionBuilder()
-            .WithUrl(NavigationManager.ToAbsoluteUri("/timerHub"))
-            .Build();
-
-        hubConnection.On<DateTime, DateTime>("ReceiveTimerData", async (start, end) =>
-        {
-            startTime = start;
-            endTime = end;
-            await InvokeAsync(StateHasChanged);
-        });
-
-        await hubConnection.StartAsync();
+        timerData = await timerService.GetData();
+        base.OnInitialized();
     }
 
-    private void StartTimer()
-    {
-        TimerService.Start(TimeSpan.FromSeconds(duration));
-        startTime = TimerService.GetStartTime();
-        endTime = TimerService.GetEndTime();
+    private void Input(ChangeEventArgs e) { }
 
-        hubConnection.SendAsync("SendTimerData", startTime, endTime);
-    }
-
-    private void PauseTimer()
+    private void Pause(MouseEventArgs e)
     {
-        TimerService.Pause();
-    }
-
-    private void ResumeTimer()
-    {
-        TimerService.Resume();
-    }
-
-    private async Task OnTimerCompleted()
-    {
-        // Serverga so'rov yuborish
-        await InvokeAsync(StateHasChanged);
-    }
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            remainingTime = TimerService.GetRemainingTime();
-            elapsedTime = TimerService.GetElapsedTime();
-            progress = (elapsedTime.TotalSeconds / (elapsedTime.TotalSeconds + remainingTime.TotalSeconds)) * 100;
-        }
+        var result = timerService.PauseHandler();
+        if (!result)
+            isPause = true;
+        else
+            isPause = false;
     }
 }
