@@ -1,0 +1,32 @@
+﻿@page "/product-history"
+@using Time.Data
+@using Stl.CommandR
+@using Time.Data
+@using Stl.Fusion.Blazor
+@using System.Threading.Tasks
+@using System.Collections.Generic
+@using System.Linq
+@using Time.Service
+@inject InventoryService InventoryService
+
+<h3>Purchase History</h3>
+<ul>
+    @foreach (var entry in purchaseHistory)
+    {
+        <li>@entry.ProductName - @entry.BuyerId - @entry.Quantity - @entry.Timestamp</li>
+    }
+</ul>
+
+@code {
+    private List<PurchaseHistoryEntry> purchaseHistory = new List<PurchaseHistoryEntry>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPurchaseHistory();
+    }
+
+    private async Task LoadPurchaseHistory()
+    {
+        purchaseHistory = (await InventoryService.GetPurchaseHistoryAsync()).ToList();
+    }
+}

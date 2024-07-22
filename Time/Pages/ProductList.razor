@@ -1,0 +1,140 @@
+﻿@page "/products"
+@using Stl.CommandR
+@using Time.Data
+@using Stl.Fusion.Blazor
+@using System.Threading.Tasks
+@using Time.Service
+@inject InventoryService InventoryService
+@inject ICommander Commander
+
+<h3>Products</h3>
+<div class="product-container">
+    @foreach (var product in productsList)
+    {
+        <div class="product-card">
+            <h4>@product.Name</h4>
+            <p>Stock: @product.Stock</p>
+            <div class="quantity-container">
+                <button @onclick="() => ChangeQuantity(product.Name, -1)">-</button>
+                <span>@product.Quantity</span>
+                <button @onclick="() => ChangeQuantity(product.Name, 1)">+</button>
+            </div>
+            <button @onclick="() => Purchase(product.Name, product.Quantity)">Purchase</button>
+        </div>
+    }
+</div>
+
+<h3>Purchase History</h3>
+<ul>
+    @foreach (var entry in purchaseHistory)
+    {
+        <li>@entry</li>
+    }
+</ul>
+
+@code {
+    private List<Product> productsList = new();
+    private List<PurchaseHistoryEntry> purchaseHistory = new List<PurchaseHistoryEntry>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts()
+    {
+        productsList = (await InventoryService.GetProductsAsync()).ToList();
+    }
+
+    private async Task ChangeQuantity(string productName, int delta)
+    {
+        var product = productsList.FirstOrDefault(p => p.Name == productName);
+        if (product != null)
+        {
+            product.Quantity += delta;
+            if (product.Quantity < 1) product.Quantity = 1; 
+            if (product.Quantity > product.Stock) product.Quantity = product.Stock; 
+
+           
+            await InventoryService.UpdateProductQuantityAsync(productName, product.Quantity);
+            await LoadProducts(); 
+        }
+    }
+
+    private async Task Purchase(string productName, int quantity)
+    {
+        var buyerId = "SampleBuyerId"; 
+        var success = await InventoryService.PurchaseProductAsync(productName, quantity, buyerId);
+        if (success)
+        {
+            var product = productsList.FirstOrDefault(p => p.Name == productName);
+            if (product != null)
+            {
+                product.Stock -= quantity;
+                product.Quantity = 1; 
+
+               
+                var currentDateTime = DateTime.Now;
+                purchaseHistory.Insert(0, new PurchaseHistoryEntry(product.Name, buyerId, quantity, currentDateTime));
+
+                
+                await LoadProducts();
+            }
+        }
+        else
+        {
+            Console.WriteLine($"Error: Not enough stock for {productName}");
+        }
+    }
+}
+
+<style>
+    .product-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .product-card {
+        border: 1px solid #ddd;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        width: 200px;
+        text-align: center;
+    }
+
+    .quantity-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 10px 0;
+    }
+
+        .quantity-container button {
+            padding: 5px 10px;
+            font-size: 1.2em;
+            border: 1px solid #ddd;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        .quantity-container span {
+            margin: 0 10px;
+            font-size: 1.2em;
+        }
+
+        .quantity-container button:hover {
+            background-color: #0056b3;
+        }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+        ul li {
+            padding: 5px 0;
+        }
+</style>

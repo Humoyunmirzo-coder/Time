@@ -8,7 +8,6 @@ using Time.TimeDbcontext;
 using Stl.Fusion.UI;
 using Syncfusion.Blazor;
 
-
 internal class Program
 {
     private static void Main(string[] args)
@@ -19,10 +18,8 @@ internal class Program
         builder.Services.AddRazorPages();
         builder.Services.AddServerSideBlazor();
 
-
-        builder.Services.AddServerSideBlazor();
         builder.Services.AddDbContext<TimerContext>(options =>
-                   options.UseNpgsql("Server=localhost;Database=TimeDB;Username=postgres;Password=2244;"));
+            options.UseNpgsql("Server=localhost;Database=TimeDB;Username=postgres;Password=2244;"));
 
         builder.Services.AddScoped<TimerRepository>();
         builder.Services.AddScoped<TimerService>();
@@ -30,16 +27,14 @@ internal class Program
         var fusion = builder.Services.AddFusion();
         fusion.AddFusionTime();
         fusion.AddService<TimerService>();
-        fusion = builder.Services.AddFusion();
 
         builder.Services.AddCommander();
-
-      //  builder.Services.AddHostedService(c => c.GetRequiredService<TimerService>());
-
         builder.Services.AddTransient<IUpdateDelayer>(c => new UpdateDelayer(c.UIActionTracker(), 0.1));
         builder.Services.AddSignalR();
 
-       // builder.Services.AddSyncfusionBlazor();
+        // Add InventoryService
+        builder.Services.AddSingleton<InventoryService>();
+
         var app = builder.Build();
 
         // Configure the HTTP request pipeline.
