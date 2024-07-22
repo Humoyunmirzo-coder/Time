@@ -31,7 +31,6 @@
     <div class="alert alert-warning" role="alert">Update error: @error.Message</div>
 }
 
-<!-- Qolgan vaqt, boshlash vaqti, tugash vaqti va o'tgan vaqt ma'lumotlarini bir qator qilib ko'rsatish -->
 <div class="info-bar">
     <span>Qolgan vaqt: @_elapsedTime</span>
     <span>Boshlash vaqt: @startTime</span>
@@ -39,7 +38,7 @@
     <span>O'tgan vaqt: @_remainingTime</span>
 </div>
 
-<!-- Input vaqti shaklini o'zgartirish -->
+
 <div class="input-container">
     <input type="number" @bind="TimerDuration" @oninput="OnInputChange" readonly="@IsRunning" placeholder="Taymer vaqti (soniya)" />
     <div class="button-container">
@@ -49,7 +48,6 @@
     <p hidden="@isPause">Stopping...</p>
 </div>
 
-<!-- Aylana shaklidagi progress bar -->
 <div class="progress-container">
     <div class="progress-circle" style="--percentage: @_elapsedPercentage;"></div>
     <div class="progress-text">@FormatTime(_remainingTime)</div>
@@ -179,7 +177,7 @@ else
         display: flex;
         justify-content: space-around;
         align-items: center;
-        background-color: #f8f9fa; /* Yashil rangsiz */
+        background-color: #f8f9fa; 
         color: black;
         padding: 10px;
         border-radius: 10px;

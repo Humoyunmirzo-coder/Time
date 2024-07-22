@@ -59,7 +59,7 @@ internal class Program
 
         app.MapBlazorHub();
         app.MapFallbackToPage("/_Host");
-        app.MapHub<TimerHub>("/timerHub"); // SignalR hub yo'lini qo'shish
+        app.MapHub<TimerHub>("/timerHub");
 
         app.Run();
     }
