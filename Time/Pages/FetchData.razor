@@ -1,4 +1,4 @@
-﻿@page "/fetchdata"
+﻿@* @page "/fetchdata"
 @using Time.Data
 @inject WeatherForecastService ForecastService
 
@@ -46,3 +46,4 @@ else
         forecasts = await ForecastService.GetForecastAsync(DateOnly.FromDateTime(DateTime.Now));
     }
 }
+ *@
